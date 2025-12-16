@@ -1,18 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Willpower Wallet</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>定力存钱罐 - 联网版</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-      body {
-        font-family: 'Inter', sans-serif;
-        background-color: #f0fdf4; /* green-50 */
-      }
+        /* --- CSS 样式部分 --- */
+        :root {
+            --primary-green: #2ecc71;
+            --dark-green: #27ae60;
+            --bg-color: #f4f7f6;
+            --text-dark: #2c3e50;
+            --text-light: #95a5a6;
+            --white: #ffffff;
+            --danger: #e74c3c;
+            --shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 80px; }
+
+        .hidden { display: none !important; }
+        .btn { background-color: var(--primary-green); color: white; border: none; padding: 12px 24px; border-radius: 50px; font-size: 16px; font-weight: bold; width: 100%; cursor: pointer; transition: transform 0.1s; margin-top: 10px; }
+        .btn:active { transform: scale(0.98); }
+        .btn-outline { background: transparent; border: 2px solid var(--primary-green); color: var(--primary-green); }
+        .card { background: var(--white); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0 16px; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; background: #fafafa; }
+        
+        /* 登录页样式 */
+        #section-auth { padding: 40px 24px; min-height: 100vh; background: white; display: flex; flex-direction: column; justify-content: center; }
+        .auth-toggle { text-align: center; margin-top: 20px; font-size: 14px; color: #666; cursor: pointer; text-decoration: underline; }
+
+        /* 主界面样式 */
+        .hero-card { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; border-radius: 20px; padding: 25px; margin: 20px; box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3); }
+        .hero-stats { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .stat-item .value { font-size: 28px; font-weight: 800; margin-top: 5px; }
+        .insight-text { background: rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 8px; font-size: 13px; text-align: center; }
+        .feed-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; height: 70px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--text-light); width: 20%; cursor: pointer; }
+        .nav-item.active { color: var(--primary-green); }
+        .fab-container { position: relative; top: -25px; }
+        .fab-btn { width: 60px; height: 60px; background: var(--primary-green); border-radius: 50%; border: 4px solid white; box-shadow: 0 4px 10px rgba(46, 204, 113, 0.4); display: flex; align-items: center; justify-content: center; color: white; font-size: 30px; cursor: pointer; }
+        
+        /* 排行榜样式 */
+        .rank-item { display: flex; align-items: center; padding: 15px; background: white; border-radius: 12px; margin-bottom: 10px; box-shadow: var(--shadow); }
+        .rank-num { font-size: 18px; font-weight: bold; width: 30px; color: var(--text-light); }
+        .is-me { border: 2px solid var(--primary-green); background: #e8f5e9; }
+        
+        /* 模态框 */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: flex-end; }
+        .modal-content { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 24px; animation: slideUp 0.3s ease; max-height: 80vh; overflow-y: auto; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .food-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+        .food-item { display: flex; flex-direction: column; align-items: center; padding: 10px; border: 1px solid #eee; border-radius: 12px; cursor: pointer; }
+        .food-item.selected { border-color: var(--primary-green); background: #e8f5e9; }
+        .food-emoji { font-size: 24px; margin-bottom: 5px; }
+        .food-name { font-size: 12px; text-align: center; }
     </style>
-  <script type="importmap">
+<script type="importmap">
 {
   "imports": {
     "react/": "https://esm.sh/react@^19.2.3/",
@@ -24,8 +71,293 @@
 }
 </script>
 </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-  </body>
+<body>
+
+    <div id="section-auth">
+        <div style="text-align: center; margin-bottom: 40px;">
+            <h1 style="color: var(--primary-green); margin-bottom: 10px;">🥦 定力存钱罐</h1>
+            <p style="color: #666;">云端同步 · 真实社交</p>
+        </div>
+        
+        <div class="card">
+            <h3 id="auth-title">登录账号</h3>
+            <input type="email" id="auth-email" placeholder="邮箱地址 (用于找回账号)">
+            <input type="password" id="auth-password" placeholder="设置密码 (至少6位)">
+            <button class="btn" id="btn-auth-action" onclick="handleAuth()">登录 / 注册</button>
+            <div id="auth-msg" style="color: red; font-size: 12px; margin-top: 10px; text-align: center;"></div>
+        </div>
+        <div class="auth-toggle" onclick="toggleAuthMode()">没有账号？点击注册</div>
+    </div>
+
+    <div id="section-onboarding" class="hidden" style="padding: 40px 24px; min-height: 100vh; background: white;">
+        <div class="card">
+            <h3>完善您的档案</h3>
+            <p style="font-size: 12px; color: #666; margin-bottom: 15px;">*这决定了热量计算的准确性</p>
+            <label>昵称</label><input type="text" id="ob-name">
+            <label>手机号 (作为社群ID)</label><input type="tel" id="ob-phone">
+            <label>身高 (cm)</label><input type="number" id="ob-height">
+            <label>体重 (kg)</label><input type="number" id="ob-weight">
+            <label>年龄</label><input type="number" id="ob-age">
+            <button class="btn" onclick="saveUserProfile()">开始旅程</button>
+        </div>
+    </div>
+
+    <div id="app-container" class="hidden">
+        <div id="tab-home" class="tab-content">
+            <div style="padding: 20px 20px 0;">
+                <div style="font-size: 14px; color: #777;">Hi, <span id="display-name">...</span></div>
+                <div style="font-size: 20px; font-weight: bold;">今天也是意志力爆棚的一天！</div>
+            </div>
+            <div class="hero-card">
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <h3>累计省下</h3>
+                        <div class="value">¥<span id="display-money">0</span></div>
+                    </div>
+                    <div class="stat-item" style="text-align: right;">
+                        <h3>少摄入热量</h3>
+                        <div class="value" style="color: #ffeb3b;"><span id="display-cal">0</span> kcal</div>
+                    </div>
+                </div>
+                <div class="insight-text">🏃 相当于您慢跑了 <span id="display-jogging">0</span> 分钟</div>
+            </div>
+            <div style="padding: 0 20px;">
+                <h4 style="margin: 0 0 15px;">近期记录 (实时云同步)</h4>
+                <div id="records-container">
+                    <div style="text-align: center; color: #aaa; margin-top: 20px; font-size: 13px;">加载中...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-community" class="tab-content hidden" style="padding: 20px;">
+            <h2 style="margin-top: 0;">🔥 真实社群排行榜</h2>
+            <div class="card" style="background: #e3f2fd; border: 1px solid #90caf9;">
+                <p style="font-size: 12px; margin:0;">这是真实存在的用户数据。邀请朋友注册，他们就会出现在这里！</p>
+            </div>
+            <button class="btn" onclick="refreshLeaderboard()">刷新排行榜</button>
+            <div id="leaderboard-list" style="margin-top: 20px;"></div>
+        </div>
+
+        <div id="tab-stats" class="tab-content hidden" style="padding: 20px;">
+            <h2>财富积累趋势</h2>
+            <div class="card" style="height: 300px;">
+                <canvas id="moneyChart"></canvas>
+            </div>
+        </div>
+
+        <div id="tab-profile" class="tab-content hidden" style="padding: 20px;">
+            <h2>我的档案</h2>
+            <div class="card">
+                <p><strong>账号:</strong> <span id="p-email"></span></p>
+                <p><strong>昵称:</strong> <span id="p-name"></span></p>
+                <p><strong>身体数据:</strong> <span id="p-body"></span></p>
+            </div>
+            <button class="btn" style="background: #e74c3c;" onclick="handleLogout()">退出登录</button>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="switchTab('home', this)"><span>🏠 首页</span></div>
+            <div class="nav-item" onclick="switchTab('community', this)"><span>🏆 社群</span></div>
+            <div class="fab-container"><div class="fab-btn" onclick="openAddModal()">+</div></div>
+            <div class="nav-item" onclick="switchTab('stats', this)"><span>📈 统计</span></div>
+            <div class="nav-item" onclick="switchTab('profile', this)"><span>👤 我的</span></div>
+        </div>
+    </div>
+
+    <div id="add-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>刚才忍住了什么？</h3>
+            <div class="food-grid">
+                <div class="food-item" onclick="selectFood('奶茶', 500, 25)">
+                    <div class="food-emoji">🧋</div><div class="food-name">奶茶</div>
+                </div>
+                <div class="food-item" onclick="selectFood('炸鸡', 600, 35)">
+                    <div class="food-emoji">🍗</div><div class="food-name">炸鸡</div>
+                </div>
+                <div class="food-item" onclick="selectFood('蛋糕', 450, 30)">
+                    <div class="food-emoji">🍰</div><div class="food-name">蛋糕</div>
+                </div>
+                <div class="food-item" onclick="selectFood('烧烤', 800, 80)">
+                    <div class="food-emoji">🍢</div><div class="food-name">烧烤</div>
+                </div>
+            </div>
+            <div id="selected-info" class="hidden">
+                <label>确认省下的钱 (¥)</label>
+                <input type="number" id="input-price">
+                <button class="btn" onclick="confirmRecord()">确认记录</button>
+            </div>
+            <div style="text-align: center; margin-top: 15px;" onclick="document.getElementById('add-modal').classList.add('hidden')">取消</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, addDoc, query, where, getDocs, orderBy, updateDoc, increment, limit } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // ✅ 这里是你的最新配置 (willpower-wallet)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRRIkrHQ4o4Dds4wMxL86MarES7-jLCEw",
+            authDomain: "willpower-wallet.firebaseapp.com",
+            projectId: "willpower-wallet",
+            storageBucket: "willpower-wallet.firebasestorage.app",
+            messagingSenderId: "219930043602",
+            appId: "1:219930043602:web:2508223f027ace3fa2390b"
+        };
+
+        // Initialize
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        let currentUserData = null;
+        let isRegistering = false;
+        let currentSelectedFood = null;
+
+        // --- 认证逻辑 ---
+        window.toggleAuthMode = () => {
+            isRegistering = !isRegistering;
+            document.querySelector('#auth-title').innerText = isRegistering ? "注册新账号" : "登录账号";
+            document.querySelector('.auth-toggle').innerText = isRegistering ? "已有账号？点击登录" : "没有账号？点击注册";
+        };
+
+        window.handleAuth = async () => {
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const msg = document.getElementById('auth-msg');
+            
+            if(!email || !password) return msg.innerText = "请填写邮箱和密码";
+
+            try {
+                if (isRegistering) {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+            } catch (error) {
+                msg.innerText = error.message.replace("Firebase: ", "");
+            }
+        };
+
+        window.handleLogout = () => signOut(auth);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.getElementById('section-auth').classList.add('hidden');
+                const docRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    currentUserData = docSnap.data();
+                    showDashboard();
+                } else {
+                    document.getElementById('section-onboarding').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('section-auth').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+                document.getElementById('section-onboarding').classList.add('hidden');
+            }
+        });
+
+        // --- 业务逻辑 ---
+        window.saveUserProfile = async () => {
+            const user = auth.currentUser;
+            const profile = {
+                uid: user.uid,
+                email: user.email,
+                name: document.getElementById('ob-name').value,
+                phone: document.getElementById('ob-phone').value,
+                height: Number(document.getElementById('ob-height').value),
+                weight: Number(document.getElementById('ob-weight').value),
+                age: Number(document.getElementById('ob-age').value),
+                totalMoney: 0,
+                totalCalories: 0
+            };
+
+            await setDoc(doc(db, "users", user.uid), profile);
+            currentUserData = profile;
+            document.getElementById('section-onboarding').classList.add('hidden');
+            showDashboard();
+        };
+
+        function showDashboard() {
+            document.getElementById('app-container').classList.remove('hidden');
+            updateUI();
+            loadRecords();
+            refreshLeaderboard();
+        }
+
+        function updateUI() {
+            document.getElementById('display-name').innerText = currentUserData.name;
+            document.getElementById('display-money').innerText = currentUserData.totalMoney;
+            document.getElementById('display-cal').innerText = currentUserData.totalCalories;
+            const calPerMin = currentUserData.weight * 0.115;
+            const savedMinutes = Math.round(currentUserData.totalCalories / (calPerMin || 1));
+            document.getElementById('display-jogging').innerText = savedMinutes;
+            document.getElementById('p-email').innerText = currentUserData.email;
+            document.getElementById('p-name').innerText = currentUserData.name;
+            document.getElementById('p-body').innerText = `${currentUserData.height}cm / ${currentUserData.weight}kg`;
+        }
+
+        async function loadRecords() {
+            const user = auth.currentUser;
+            const q = query(collection(db, "records"), where("uid", "==", user.uid), orderBy("timestamp", "desc"), limit(10));
+            const querySnapshot = await getDocs(q);
+            const container = document.getElementById('records-container');
+            container.innerHTML = '';
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const div = document.createElement('div');
+                div.className = 'feed-item';
+                div.innerHTML = `<div><strong>${data.food}</strong> <span style="font-size:12px;color:#999">${new Date(data.timestamp.toDate()).toLocaleTimeString()}</span></div><div style="text-align:right"><div style="color:var(--dark-green);font-weight:bold">+¥${data.price}</div><div style="font-size:12px;color:#f39c12">-${data.calories} kcal</div></div>`;
+                container.appendChild(div);
+            });
+        }
+
+        window.selectFood = (name, cal, defaultPrice) => {
+            document.querySelectorAll('.food-item').forEach(el => el.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            currentSelectedFood = { name, cal };
+            document.getElementById('input-price').value = defaultPrice;
+            document.getElementById('selected-info').classList.remove('hidden');
+        };
+
+        window.confirmRecord = async () => {
+            const price = Number(document.getElementById('input-price').value);
+            const user = auth.currentUser;
+            await addDoc(collection(db, "records"), { uid: user.uid, food: currentSelectedFood.name, calories: currentSelectedFood.cal, price: price, timestamp: new Date() });
+            const userRef = doc(db, "users", user.uid);
+            await updateDoc(userRef, { totalMoney: increment(price), totalCalories: increment(currentSelectedFood.cal) });
+            currentUserData.totalMoney += price;
+            currentUserData.totalCalories += currentSelectedFood.cal;
+            updateUI();
+            loadRecords();
+            document.getElementById('add-modal').classList.add('hidden');
+            alert(`已同步到云端！`);
+        };
+
+        window.refreshLeaderboard = async () => {
+            const q = query(collection(db, "users"), orderBy("totalMoney", "desc"), limit(10));
+            const querySnapshot = await getDocs(q);
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = '';
+            let rank = 1;
+            querySnapshot.forEach((doc) => {
+                const u = doc.data();
+                const isMe = u.uid === auth.currentUser.uid;
+                const div = document.createElement('div');
+                div.className = `rank-item ${isMe ? 'is-me' : ''}`;
+                div.innerHTML = `<div class="rank-num">${rank++}</div><div style="flex:1"><div style="font-weight:bold">${u.name} ${isMe ? '(我)' : ''}</div><div style="font-size:12px;color:#999">ID: ${u.phone || '***'}</div></div><div style="font-weight:bold;color:var(--primary-green)">¥${u.totalMoney}</div>`;
+                list.appendChild(div);
+            });
+        };
+
+        window.openAddModal = () => { document.getElementById('add-modal').classList.remove('hidden'); document.getElementById('selected-info').classList.add('hidden'); };
+        window.switchTab = (tabName, el) => { document.querySelectorAll('.tab-content').forEach(d => d.classList.add('hidden')); document.getElementById('tab-' + tabName).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(d => d.classList.remove('active')); el.classList.add('active'); if(tabName === 'community') refreshLeaderboard(); };
+
+        const ctx = document.getElementById('moneyChart').getContext('2d');
+        new Chart(ctx, { type: 'line', data: { labels: ['Start', 'Now'], datasets: [{ label: '省钱趋势', data: [0, 10], borderColor: '#2ecc71', tension: 0.4 }] } });
+    </script>
+</body>
 </html>
